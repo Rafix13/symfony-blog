@@ -1,0 +1,14 @@
+{% extends 'base.html.twig' %}
+
+{% block body %}
+    <div class="container">
+        <h1>New Post</h1>
+
+        {{ form_start(form) }}
+            {{ form_row(form.title) }}
+            {{ form_row(form.content) }}
+            {{ form_row(form.image) }}
+            {{ form_row(form.Send) }}
+        {{ form_end(form) }}
+    </div>
+{% endblock %}
