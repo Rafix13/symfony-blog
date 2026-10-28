@@ -13,6 +13,10 @@ use App\Form\ContactFormType;
 use Doctrine\Persistence\ManagerRegistry;
 use App\Entity\Category;
 
+use App\Entity\Comment;
+use App\Form\CommentFormType;
+use Doctrine\ORM\EntityManagerInterface;
+
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -114,12 +118,75 @@ final class PageController extends AbstractController
             $entityManager->persist($post);
             $entityManager->flush();
 
-            return $this->redirectToRoute('blog');
+            return $this->redirectToRoute('single_post', [
+                'slug' => $post->getSlug(),
+            ]);
         }
 
         return $this->render('blog/new_post.html.twig', [
             'form' => $form->createView(),
         ]);
     }
+
+
+    
+    #[Route('/single_post/{slug}', name: 'single_post')]
+    public function post(
+        ManagerRegistry $doctrine,
+        EntityManagerInterface $entityManager,
+        Request $request,
+        string $slug
+    ): Response {
+        $repository = $doctrine->getRepository(Post::class);
+
+        $post = $repository->findOneBy(['slug' => $slug]);
+
+        if (!$post) {
+            throw $this->createNotFoundException(
+                'No existe ninguna publicación con ese slug: ' . $slug
+            );
+        }
+
+        // Crear y procesar el formulario
+        $comment = new Comment();
+        $commentForm = $this->createForm(CommentFormType::class, $comment);
+        $commentForm->handleRequest($request);
+
+        if ($commentForm->isSubmitted() && $commentForm->isValid()) {
+            $comment->setPublishedAt(new \DateTime());
+            $comment->setPost($post);
+
+            $entityManager->persist($comment);
+            $entityManager->flush();
+
+            return $this->redirectToRoute('single_post', [
+                'slug' => $post->getSlug(),
+            ]);
+        }
+
+        // Obtener las publicaciones recientes
+        $recents = $repository->findRecents();
+
+        return $this->render('blog/single_post.html.twig', [
+            'post' => $post,
+            'recents' => $recents,
+            'commentForm' => $commentForm->createView(),
+        ]);
+    }
+
+
+
+    #[Route('/blog/{page}', name: 'blog', requirements: ['page' => '\d+'])]
+    public function blog(ManagerRegistry $doctrine, int $page = 1): Response
+    {
+        $repository = $doctrine->getRepository(Post::class);
+        $posts = $repository->findAll($page);
+
+        return $this->render('blog/blog.html.twig', [
+            'posts' => $posts,
+        ]);
+    }
+
+
 
 }

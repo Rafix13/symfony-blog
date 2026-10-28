@@ -1,0 +1,14 @@
+
+<div id="form" class="col-xs-12 col-sm-6 col-sm-push-3">
+    {{ form_start(commentForm, {
+        'attr': {'class': 'form-horizontal'}
+    }) }}
+
+    {{ form_row(commentForm.name) }}
+    {{ form_row(commentForm.email) }}
+    {{ form_row(commentForm.text) }}
+
+    {{ form_row(commentForm.Send) }}
+
+    {{ form_end(commentForm) }}
+</div>
